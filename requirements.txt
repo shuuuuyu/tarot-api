@@ -1,11 +1,7 @@
 fastapi
-uvicorn[standard]
-pydantic
-langchain
-langchain-groq
-langchain-google-genai
-langchain-community
-google-generativeai
-faiss-cpu
-python-multipart
+uvicorn
 python-dotenv
+langchain==1.0.2
+langchain-core==1.0.1
+langchain-community
+faiss-cpu
