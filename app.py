@@ -2,8 +2,8 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from langchain_groq import ChatGroq
-from langchain_google_genai import GoogleGenerativeAIEmbeddings  # ← 改回 Gemini Embedding
 from langchain_community.vectorstores import FAISS
+from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 import os
@@ -29,12 +29,9 @@ app.add_middleware(
 # ==================== 全域變數 ====================
 qa_chain = None
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")  # ← 只用在 Embedding
 
 if not GROQ_API_KEY:
     raise ValueError("請設定 GROQ_API_KEY 環境變數！")
-if not GEMINI_API_KEY:
-    raise ValueError("請設定 GEMINI_API_KEY 環境變數！")
 
 # ==================== 啟動時載入模型 ====================
 @app.on_event("startup")
@@ -43,13 +40,24 @@ async def load_models():
     print("🔮 正在載入塔羅資料庫...")
 
     try:
-        # 1️⃣ Embeddings（用 Gemini，但只在查詢時用 1 次）
-        print("📦 初始化 Gemini Embeddings...")
-        embeddings = GoogleGenerativeAIEmbeddings(
-            model="models/embedding-001",
-            google_api_key=GEMINI_API_KEY
+        # 1️⃣ Embeddings（使用與建立 FAISS 時相同的模型）
+        print("📦 載入 E5 Embedding 模型...")
+        
+        # 自訂 E5 Embedding（加上 passage: 和 query: 前綴）
+        from langchain_community.embeddings import HuggingFaceEmbeddings
+        
+        class CustomE5Embedding(HuggingFaceEmbeddings):
+            def embed_documents(self, texts):
+                texts = [f"passage: {t}" for t in texts]
+                return super().embed_documents(texts)
+            
+            def embed_query(self, text):
+                return super().embed_query(f"query: {text}")
+        
+        embeddings = CustomE5Embedding(
+            model_name="intfloat/multilingual-e5-small"
         )
-        print("✅ Embeddings 初始化完成")
+        print("✅ E5 Embedding 模型載入完成")
 
         # 2️⃣ 載入 FAISS 向量資料庫
         print("📚 載入 FAISS 資料庫...")
