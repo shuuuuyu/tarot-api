@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# 環境變數 (不要上傳到 Git!)
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 測試
+.pytest_cache/
+.coverage
+
+# 系統檔案
+.DS_Store
+Thumbs.db
+
+# 日誌
+*.log
